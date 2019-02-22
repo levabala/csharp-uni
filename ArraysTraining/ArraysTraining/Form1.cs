@@ -56,8 +56,88 @@ namespace ArraysTraining
                            .FirstOrDefault(n => n.Checked);
 
             checkedTaskKey = checkedRadioButton.Text;
+        }            
+
+        private void reGenerateInput()
+        {
+            int[] arr = parseArrayInput(textBoxInput.Text);
+
+            string newValue = string.Join(" ", arr);
+            textBoxArrayView.Text = newValue;
+
+            input = arr;
         }
 
+        private void updateInput()
+        {
+            try
+            {
+                int[] arr = textBoxArrayView.Text.Trim().Split(' ').Where(val => val.Length != 0).Aggregate(new List<int>(), (acc, value) =>
+                {
+                    acc.Add(int.Parse(value));
+                    return acc;
+                }).ToArray();
+
+                input = arr;
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void calcOutput()
+        {
+            int[] result = new int[0];
+            try
+            {
+                result = doProcessing(input);
+            }
+            catch (Exception)
+            {
+            }
+
+            string resultValue = String.Join(" ", result);
+            textBoxOutput.Text = resultValue;
+        }
+
+
+        private int[] doProcessing(int[] arr)
+        {                        
+            Processor processor = processors[checkedTaskKey];
+
+            int[] result = processor.process(arr);
+
+            return result;
+        }
+
+        private int[] parseArrayInput(string input)
+        {
+            try
+            {
+                string[] parts = input.Split('/');
+
+                int length = int.Parse(parts[0]);
+                int from = int.Parse(parts[1]);
+                int to = int.Parse(parts[2]);
+
+                Random rnd = new Random();
+
+                int[] array = new int[length].Select((int elem) => rnd.Next(from, to)).ToArray();
+                return array;
+            }
+            catch (Exception)
+            {
+                return new int[0];
+            }
+        }
+
+        private void textBoxArrayView_TextChanged(object sender, EventArgs e)
+        {
+            updateInput();
+            calcOutput();
+        }
+
+        // --------- tasks part ---------
         private int[] firstTaskProcessor(int[] input)
         {
             bool rightDirection = radioButtonTask1Directon.Checked;
@@ -83,7 +163,7 @@ namespace ArraysTraining
             }).Aggregate(new int[input.Length], (acc, item) => {
                 acc[item.Item2] = item.Item1;
                 return acc;
-                });
+            });
         }
 
         private int[] secondTaskProcessor(int[] input)
@@ -131,37 +211,36 @@ namespace ArraysTraining
         {
             int[] createEratosfen(int from, int to)
             {
-                int[] range = Enumerable.Range(from, to - from).ToArray();
+                from = Math.Max(from, 2);
+
+                int[] range = Enumerable.Range(from, to - from + 1).ToArray();
                 List<int> removed = new List<int>();
 
                 int p = from;
-                int index = 0;
                 while (p < to)
-                {
-                    index += 1;
-                    int nextP = input[index];
+                {                    
                     for (int i = 0; i < range.Length; i++)
                     {
                         int val = range[i];
-                        if (val <= p * 2 || removed.Contains(val))
+                        if (val < p * 2 || removed.Contains(val))
                             continue;
 
-                        if (val % p == 0)
-                        {
-                            removed.Add(val);
-
-                            if (val > p) { 
-                                nextP = val;
-                                index = i;
-                            }
-                        }
+                        if (val % p == 0)                        
+                            removed.Add(val);                                                    
                     }
 
-                    p = nextP;
+                    try
+                    { 
+                        p = range.First((val) => val > p && !removed.Contains(val));
+                    }
+                    catch (Exception)
+                    {
+                        break;
+                    }
                 }
 
                 int[] simpleNumbers = range.Where((val) => !removed.Contains(val)).ToArray();
-                return simpleNumbers;
+                return new int[] { input.Count(val => simpleNumbers.Contains(val)) };
             }
 
 
@@ -171,79 +250,40 @@ namespace ArraysTraining
 
         private int[] sixthTaskProcessor(int[] input)
         {
-            return input;
-        }        
-
-        private void reGenerateInput()
-        {
-            int[] arr = parseArrayInput(textBoxInput.Text);
-
-            string newValue = string.Join(" ", arr);
-            textBoxArrayView.Text = newValue;
-
-            input = arr;
-        }
-
-        private void updateInput()
-        {
-            int[] arr = textBoxArrayView.Text.Trim().Split(' ').Where(val => val.Length != 0).Aggregate(new List<int>(), (acc, value) =>
+            int? binarySearch(int target, int[] array, (int, int)? lastRange = null)
             {
-                acc.Add(int.Parse(value));
+                if (lastRange == null)
+                    lastRange = (0, array.Length - 1);
+
+                (int, int) range = (ValueTuple<int, int>)lastRange;
+                int newIndex = range.Item1 + (range.Item2 - range.Item1) / 2;
+                int nextValue = array[newIndex];
+
+                if (nextValue == target)
+                    return newIndex;
+
+                (int, int) newRange = target < nextValue ? (range.Item1, newIndex) : (newIndex, range.Item2);
+
+                if (newRange.Item2 - newRange.Item1 < 2)
+                    return null;
+
+                return binarySearch(target, array, newRange);
+            }
+
+            int searchTarget = int.Parse(textBoxSearchTarget.Text.Trim());
+            Dictionary<int, int> indexesMap = input.Aggregate(new Dictionary<int, int>(), (acc, val) => {
+                acc[val] = Array.FindIndex(input, (element) => element == val);
                 return acc;
-            }).ToArray();            
+                }
+            );
+            int[] sorted = input.OrderBy(val => val).ToArray();
+            int? index = binarySearch(searchTarget, sorted);
 
-            input = arr;
+            return new int[] { index == null ? -1 : indexesMap[sorted[(int)index]] };
         }
 
-        private void calcOutput()
+        private void textBoxSearchTarget_TextChanged(object sender, EventArgs e)
         {
-            int[] result = new int[0];
-            try
-            {
-                result = doProcessing(input);
-            }
-            catch (Exception e)
-            {
-            }
-
-            string resultValue = String.Join(" ", result);
-            textBoxOutput.Text = resultValue;
-        }
-
-
-        private int[] doProcessing(int[] arr)
-        {                        
-            Processor processor = processors[checkedTaskKey];
-
-            int[] result = processor.process(arr);
-
-            return result;
-        }
-
-        private int[] parseArrayInput(string input)
-        {
-            try
-            {
-                string[] parts = input.Split('/');
-
-                int length = int.Parse(parts[0]);
-                int from = int.Parse(parts[1]);
-                int to = int.Parse(parts[2]);
-
-                Random rnd = new Random();
-
-                int[] array = new int[length].Select((int elem) => rnd.Next(from, to)).ToArray();
-                return array;
-            }
-            catch (Exception)
-            {
-                return new int[0];
-            }
-        }
-
-        private void textBoxArrayView_TextChanged(object sender, EventArgs e)
-        {
-            updateInput();
             calcOutput();
         }
     }

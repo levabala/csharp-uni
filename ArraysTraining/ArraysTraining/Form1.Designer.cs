@@ -200,6 +200,7 @@
             this.textBoxSearchTarget.Size = new System.Drawing.Size(100, 27);
             this.textBoxSearchTarget.TabIndex = 2;
             this.textBoxSearchTarget.Text = "0";
+            this.textBoxSearchTarget.TextChanged += new System.EventHandler(this.textBoxSearchTarget_TextChanged);
             // 
             // radioButtonTask6
             // 
