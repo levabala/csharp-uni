@@ -15,6 +15,15 @@ namespace ArraysTraining
         private Dictionary<string, Processor> processors;
         private int[] input;
         private string checkedTaskKey = "task1";
+        private Dictionary<string, string> taskInfo = new Dictionary<string, string>()
+        {
+            {"task1", "Сдвинуть массив на х" },
+            {"task2", "Среднее арифметическое наибольшего промежутка монотонности" },
+            {"task3", "Проверка чередования положительных/отрицательных чисел" },
+            {"task4", "Максимальное кол-во одинаковых чисел" },
+            {"task5", "Определить кол-во простых чисел" },
+            {"task6", "Бинарный поиск" },
+        };
 
         public Form1()
         {
@@ -42,15 +51,23 @@ namespace ArraysTraining
             calcOutput();
 
             groupBoxTasks.Controls.OfType<RadioButton>().ToList().ForEach(radioButton => radioButton.CheckedChanged += RadioButton_CheckedChanged);
+
+            updateTasksLayout();
         }
 
         private void RadioButton_CheckedChanged(object sender, EventArgs e)
         {
-            updateVisibility();
+            updateChoosenTask();
+            updateTasksLayout();
             calcOutput();
         }
 
-        private void updateVisibility()
+        private void updateTasksLayout()
+        {
+            textBoxTaskInfo.Text = taskInfo[checkedTaskKey];
+        }
+
+        private void updateChoosenTask()
         {
             RadioButton checkedRadioButton = groupBoxTasks.Controls.OfType<RadioButton>()
                            .FirstOrDefault(n => n.Checked);
@@ -260,9 +277,15 @@ namespace ArraysTraining
                 int nextValue = array[newIndex];
 
                 if (nextValue == target)
-                    return newIndex;
+                    return newIndex;                
 
                 (int, int) newRange = target < nextValue ? (range.Item1, newIndex) : (newIndex, range.Item2);
+
+                if (array[newRange.Item1] == target)
+                    return newRange.Item1;
+
+                if (array[newRange.Item2] == target)
+                    return newRange.Item2;
 
                 if (newRange.Item2 - newRange.Item1 < 2)
                     return null;
