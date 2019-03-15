@@ -14,15 +14,7 @@ namespace TwoDimensionalArrays
     {
         Dictionary<string, Entity> entities = new Dictionary<string, Entity>()
         {
-            {"sum", new Entity(sum, (entries) => entries.Select(e => e.getValue()).Select(v => {
-                int integer;
-
-                if (int.TryParse(v, out integer))
-                    return integer;
-
-                return v;
-            }))
-            }
+          
         };
 
         public Form1()
